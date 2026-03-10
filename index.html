@@ -668,14 +668,14 @@ function gsRead(sheet){
   });
 }
 
-function gsWrite(sheet, rows){
+function gsWriteChunk(sheet, chunk){
   return new Promise((resolve, reject)=>{
     const cbName = _newCb();
     const script = document.createElement('script');
     const timer = setTimeout(()=>{
       delete window[cbName];
       if(document.body.contains(script)) document.body.removeChild(script);
-      reject(new Error('시간 초과 - 인터넷 연결을 확인해주세요'));
+      reject(new Error('시간 초과'));
     }, 20000);
     window[cbName] = function(json){
       clearTimeout(timer);
@@ -684,11 +684,26 @@ function gsWrite(sheet, rows){
       if(json.ok) resolve();
       else reject(new Error(json.error));
     };
-    const encoded = encodeURIComponent(JSON.stringify(rows));
+    const encoded = encodeURIComponent(JSON.stringify(chunk));
     script.src = GAS_URL + '?action=write&sheet=' + encodeURIComponent(sheet) + '&data=' + encoded + '&callback=' + cbName;
     script.onerror = function(){ clearTimeout(timer); delete window[cbName]; reject(new Error('스크립트 로드 실패')); };
     document.body.appendChild(script);
   });
+}
+
+async function gsWrite(sheet, rows){
+  // 첫 청크는 clear=true로 시트 초기화 후 쓰기
+  const CHUNK = 30;
+  for(let i=0; i<rows.length; i+=CHUNK){
+    const chunk = rows.slice(i, i+CHUNK);
+    const isFirst = (i===0);
+    // 첫 번째 청크에 clear 플래그 추가
+    const sendChunk = isFirst ? [{_clear:'true'}, ...chunk] : chunk;
+    await gsWriteChunk(sheet, sendChunk);
+  }
+  if(rows.length === 0){
+    await gsWriteChunk(sheet, [{_clear:'true'}]);
+  }
 }
 
 // ── 데이터 로드 ────────────────────────────
