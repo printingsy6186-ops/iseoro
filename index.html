@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1a1a2e">
+<title>이세로 모임관리</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #1a1a2e;
+  --paper: #f5f0e8;
+  --accent: #c8392b;
+  --gold: #d4a017;
+  --muted: #8a8070;
+  --paid: #2d6a4f;
+  --unpaid: #e8d5b7;
+  --card: #fffdf7;
+  --border: #ddd5c5;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: 'Noto Sans KR', sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── HEADER ── */
+.header {
+  background: var(--ink);
+  padding: calc(var(--safe-top) + 12px) 20px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  border-bottom: 3px solid var(--accent);
+}
+.header-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 26px;
+  letter-spacing: 5px;
+  color: var(--paper);
+}
+.header-title span { color: var(--gold); }
+.header-sub { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-align: right; line-height: 1.4; }
+
+/* ── SCROLL AREA ── */
+.scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav {
+  display: flex;
+  background: var(--ink);
+  border-top: 2px solid var(--accent);
+  padding-bottom: var(--safe-bottom);
+  flex-shrink: 0;
+}
+.nav-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 10px 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #666;
+  transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.nav-btn.active { color: var(--gold); }
+.nav-icon { font-size: 20px; line-height: 1; }
+.nav-label { font-family: 'Noto Sans KR', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.5px; }
+
+/* ── SECTIONS ── */
+.section { display: none; padding: 16px; }
+.section.active { display: block; }
+
+/* ── YEAR CHIPS ── */
+.chip-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.chip {
+  padding: 6px 14px;
+  border: 2px solid var(--border);
+  border-radius: 20px;
+  background: var(--card);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.chip.active { background: var(--ink); color: var(--gold); border-color: var(--ink); }
+.chip-label { font-size: 11px; color: var(--muted); }
+
+/* ── STAT CARDS ── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.stat-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  position: relative;
+  overflow: hidden;
+}
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--accent);
+}
+.stat-card.gold::before { background: var(--gold); }
+.stat-card.green::before { background: var(--paid); }
+.stat-card.blue::before { background: #3a7bd5; }
+.stat-label { font-size: 10px; color: var(--muted); letter-spacing: 0.5px; margin-bottom: 6px; }
+.stat-value { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 1px; line-height: 1; }
+.stat-sub { font-size: 10px; color: var(--muted); margin-top: 3px; }
+
+/* ── CARD CONTAINER ── */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.card-head {
+  background: var(--ink);
+  color: var(--paper);
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.card-title { font-size: 13px; font-weight: 700; letter-spacing: 1px; }
+.card-hint { font-size: 10px; color: #888; }
+
+/* ── MEMBER ROWS (납부현황 - 모바일 최적화) ── */
+.member-pay-list { }
+.member-pay-row {
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  gap: 10px;
+}
+.member-pay-row:last-child { border-bottom: none; }
+.member-pay-info { flex: 0 0 72px; }
+.member-pay-name { font-size: 13px; font-weight: 700; }
+.member-pay-co { font-size: 10px; color: var(--muted); }
+.month-dots { display: flex; gap: 5px; flex: 1; flex-wrap: nowrap; justify-content: center; }
+.pay-dot {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.1s, background 0.15s;
+  flex-shrink: 0;
+  border: none;
+  outline: none;
+}
+.pay-dot:active { transform: scale(0.85); }
+.pay-dot.paid { background: var(--paid); color: white; }
+.pay-dot.unpaid { background: var(--unpaid); color: var(--muted); border: 1.5px dashed #bbb; }
+.month-label-row { font-size: 10px; color: var(--muted); }
+
+.count-badge {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.count-badge.full { background: var(--paid); color: white; }
+.count-badge.partial { background: var(--gold); color: var(--ink); }
+.count-badge.none { background: var(--unpaid); color: var(--muted); }
+
+/* month header row */
+.pay-header-row {
+  display: flex;
+  align-items: center;
+  padding: 6px 14px;
+  background: #f0ebe0;
+  border-bottom: 1px solid var(--border);
+  gap: 10px;
+}
+.pay-header-spacer { flex: 0 0 72px; font-size: 10px; color: var(--muted); font-weight: 700; }
+.pay-header-months { display: flex; gap: 5px; flex: 1; justify-content: center; }
+.pay-header-month { width: 34px; text-align: center; font-size: 10px; font-weight: 700; color: var(--muted); }
+.pay-header-cnt { flex-shrink: 0; min-width: 32px; text-align: center; font-size: 10px; color: var(--muted); font-weight: 700; }
+
+/* ── FINANCE ── */
+.fin-form { padding: 14px; border-bottom: 1px solid var(--border); }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+.form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+.form-group { display: flex; flex-direction: column; gap: 4px; }
+.form-label { font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: 0.5px; }
+.form-input {
+  padding: 10px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 14px;
+  background: var(--paper);
+  color: var(--ink);
+  width: 100%;
+  -webkit-appearance: none;
+}
+.form-input:focus { outline: none; border-color: var(--ink); }
+.btn-add {
+  width: 100%;
+  padding: 12px;
+  background: var(--ink);
+  color: var(--gold);
+  border: none;
+  border-radius: 8px;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: opacity 0.2s;
+}
+.btn-add:active { opacity: 0.8; }
+
+.fin-row {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.fin-row:last-child { border-bottom: none; }
+.fin-left { flex: 1; min-width: 0; }
+.fin-date { font-size: 10px; color: var(--muted); margin-bottom: 2px; }
+.fin-desc { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fin-note { font-size: 10px; color: var(--muted); margin-top: 1px; }
+.fin-right { text-align: right; flex-shrink: 0; }
+.fin-amount { font-size: 14px; font-weight: 700; }
+.fin-amount.in { color: var(--paid); }
+.fin-amount.out { color: var(--accent); }
+.fin-balance { font-size: 10px; color: var(--muted); margin-top: 2px; }
+.btn-del {
+  background: none;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 11px;
+  color: var(--muted);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.btn-del:active { background: #fee; border-color: var(--accent); color: var(--accent); }
+
+.fin-summary {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: #f0ebe0;
+  font-size: 12px;
+  font-weight: 700;
+}
+.fin-summary .in { color: var(--paid); }
+.fin-summary .out { color: var(--accent); }
+.fin-summary .bal { color: var(--ink); }
+
+/* ── MEMBER MANAGE ── */
+.mem-form { padding: 14px; border-bottom: 1px solid var(--border); }
+.mem-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  gap: 12px;
+}
+.mem-item:last-child { border-bottom: none; }
+.mem-num { font-size: 11px; color: var(--muted); width: 20px; flex-shrink: 0; }
+.mem-info { flex: 1; }
+.mem-name { font-size: 14px; font-weight: 700; }
+.mem-co { font-size: 11px; color: var(--muted); }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed;
+  bottom: calc(64px + var(--safe-bottom) + 12px);
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--ink);
+  color: var(--gold);
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  opacity: 0;
+  transition: opacity 0.25s, transform 0.25s;
+  z-index: 999;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── 대시보드 테이블 (가로스크롤) ── */
+.dash-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.dash-table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 320px; }
+.dash-table thead th {
+  background: #f0ebe0;
+  padding: 8px 10px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted);
+  border-bottom: 2px solid var(--border);
+  white-space: nowrap;
+}
+.dash-table thead th:nth-child(2) { text-align: left; }
+.dash-table tbody tr { border-bottom: 1px solid var(--border); }
+.dash-table tbody td { padding: 8px 10px; text-align: center; vertical-align: middle; }
+.dash-table tbody td:nth-child(2) { text-align: left; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-title">이<span>세</span>로</div>
+  <div class="header-sub">인쇄·출력 모임<br>회비 관리</div>
+</div>
+
+<div class="scroll-area" id="scroll-area">
+
+  <!-- ① 현황 -->
+  <div id="sec-dashboard" class="section active">
+    <div class="chip-row">
+      <button class="chip active" onclick="setYear('2026',this,'dash')">2026년</button>
+      <button class="chip" onclick="setYear('2025',this,'dash')">2025년</button>
+      <span class="chip-label" id="dash-period"></span>
+    </div>
+    <div class="stats-grid" id="dash-stats"></div>
+    <div class="card">
+      <div class="card-head">
+        <span class="card-title" id="dash-table-title">납부 현황</span>
+      </div>
+      <div class="dash-table-wrap">
+        <table class="dash-table" id="dash-table"></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ② 납부현황 -->
+  <div id="sec-payment" class="section">
+    <div class="chip-row">
+      <button class="chip active" onclick="setYear('2026',this,'pay')">2026년</button>
+      <button class="chip" onclick="setYear('2025',this,'pay')">2025년</button>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <span class="card-title" id="pay-title">납부 현황</span>
+        <span class="card-hint">버튼 눌러서 토글</span>
+      </div>
+      <div id="pay-list"></div>
+    </div>
+  </div>
+
+  <!-- ③ 재무내역 -->
+  <div id="sec-finance" class="section">
+    <div class="chip-row">
+      <button class="chip active" onclick="setYear('2026',this,'fin')">2026년</button>
+      <button class="chip" onclick="setYear('2025',this,'fin')">2025년</button>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <span class="card-title">거래 추가</span>
+      </div>
+      <div class="fin-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">날짜</label>
+            <input type="date" class="form-input" id="fin-date">
+          </div>
+          <div class="form-group">
+            <label class="form-label">구분</label>
+            <select class="form-input" id="fin-type">
+              <option value="in">💚 입금</option>
+              <option value="out">🔴 출금</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:8px">
+          <label class="form-label">적요</label>
+          <input type="text" class="form-input" id="fin-desc" placeholder="예: 1월 회비, 식사비">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">금액 (원)</label>
+            <input type="number" class="form-input" id="fin-amount" placeholder="0" inputmode="numeric">
+          </div>
+          <div class="form-group">
+            <label class="form-label">비고</label>
+            <input type="text" class="form-input" id="fin-note" placeholder="선택">
+          </div>
+        </div>
+        <button class="btn-add" onclick="addFinance()">+ 추가</button>
+      </div>
+    </div>
+
+    <div class="card" id="fin-card">
+      <div class="card-head">
+        <span class="card-title" id="fin-title">재무 내역</span>
+        <span class="card-hint" id="fin-bal-display"></span>
+      </div>
+      <div id="fin-list"></div>
+    </div>
+  </div>
+
+  <!-- ④ 회원 -->
+  <div id="sec-members" class="section">
+    <div class="card">
+      <div class="card-head"><span class="card-title">회원 추가</span></div>
+      <div class="mem-form">
+        <div class="form-row" style="margin-bottom:8px">
+          <div class="form-group">
+            <label class="form-label">이름</label>
+            <input type="text" class="form-input" id="mem-name" placeholder="홍길동">
+          </div>
+          <div class="form-group">
+            <label class="form-label">소속 업체</label>
+            <input type="text" class="form-input" id="mem-company" placeholder="OO인쇄">
+          </div>
+        </div>
+        <button class="btn-add" onclick="addMember()">+ 추가</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="card-title" id="mem-count-title">회원 목록</span></div>
+      <div id="mem-list"></div>
+    </div>
+
+    <div class="card" style="border-color:#c8392b55;">
+      <div class="card-head" style="background:#2a1010;">
+        <span class="card-title" style="color:#e88;">⚠️ 데이터 초기화</span>
+        <span class="card-hint">구글 시트 재업로드</span>
+      </div>
+      <div style="padding:14px;">
+        <p style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:12px;">
+          구글 시트를 앱의 최신 기본 데이터로 <b style="color:var(--accent)">덮어씁니다.</b><br>
+          데이터 반영이 안 될 때 사용하세요.
+        </p>
+        <button class="btn-add" style="background:var(--accent);color:white;" onclick="resetAllData()">🔄 기본 데이터로 초기화</button>
+      </div>
+    </div>
+
+  </div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" onclick="showSection('dashboard',this)">
+    <span class="nav-icon">📊</span>
+    <span class="nav-label">현황</span>
+  </button>
+  <button class="nav-btn" onclick="showSection('payment',this)">
+    <span class="nav-icon">💳</span>
+    <span class="nav-label">납부</span>
+  </button>
+  <button class="nav-btn" onclick="showSection('finance',this)">
+    <span class="nav-icon">📒</span>
+    <span class="nav-label">재무</span>
+  </button>
+  <button class="nav-btn" onclick="showSection('members',this)">
+    <span class="nav-icon">👥</span>
+    <span class="nav-label">회원</span>
+  </button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<!-- 로딩 오버레이 -->
+<div id="loading-overlay" style="display:flex;position:fixed;inset:0;background:rgba(26,26,46,0.85);z-index:9999;flex-direction:column;align-items:center;justify-content:center;gap:16px;">
+  <div style="width:44px;height:44px;border:4px solid #444;border-top-color:#d4a017;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+  <div id="loading-msg" style="color:#f5f0e8;font-size:14px;font-weight:700;letter-spacing:1px;">불러오는 중...</div>
+</div>
+<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+
+<script>
+// ── DATA ──────────────────────────────────
+const defaultMembers = [
+  {id:1, name:'강병철', company:'혜성제본'},
+  {id:2, name:'곽정혁', company:'비경피앤디'},
+  {id:3, name:'김기범', company:'신도리코'},
+  {id:4, name:'김기범', company:'아성패키지'},
+  {id:5, name:'김영환', company:'동명사'},
+  {id:6, name:'김재현', company:'성부아트'},
+  {id:7, name:'남성현', company:'신일아트'},
+  {id:8, name:'박찬우', company:'동우페이퍼'},
+  {id:9, name:'선민욱', company:'애드원'},
+  {id:10, name:'신준철', company:'엠에스산업'},
+  {id:11, name:'안정현', company:'경인디앤피'},
+  {id:12, name:'양대중', company:'우리인쇄'},
+  {id:13, name:'이민규', company:'경희코팅'},
+  {id:14, name:'이성표', company:'서진인쇄'},
+  {id:15, name:'이혜민', company:'마이컴'},
+  {id:16, name:'주승하', company:'서울프로아트'},
+  {id:17, name:'한동수', company:'대우피엔씨'},
+  {id:18, name:'한욱', company:'신영'},
+  {id:19, name:'함성환', company:'아트디앤피'},
+];
+
+// 2026 납부현황 (1월 납부자 / 19번 함성환 1년치 선납)
+const defaultPay2026 = {
+  1:{1:true,2:false,3:false,4:false,5:false,6:false},
+  2:{1:false,2:false,3:false,4:false,5:false,6:false},
+  3:{1:false,2:false,3:false,4:false,5:false,6:false},
+  4:{1:false,2:false,3:false,4:false,5:false,6:false},
+  5:{1:true,2:false,3:false,4:false,5:false,6:false},
+  6:{1:true,2:false,3:false,4:false,5:false,6:false},
+  7:{1:true,2:false,3:false,4:false,5:false,6:false},
+  8:{1:false,2:false,3:false,4:false,5:false,6:false},
+  9:{1:false,2:false,3:false,4:false,5:false,6:false},
+  10:{1:true,2:false,3:false,4:false,5:false,6:false},
+  11:{1:false,2:false,3:false,4:false,5:false,6:false},
+  12:{1:true,2:false,3:false,4:false,5:false,6:false},
+  13:{1:false,2:false,3:false,4:false,5:false,6:false},
+  14:{1:true,2:false,3:false,4:false,5:false,6:false},
+  15:{1:true,2:false,3:false,4:false,5:false,6:false},
+  16:{1:true,2:false,3:false,4:false,5:false,6:false},
+  17:{1:true,2:false,3:false,4:false,5:false,6:false},
+  18:{1:true,2:false,3:false,4:false,5:false,6:false},
+  19:{1:true,2:true,3:true,4:true,5:true,6:true},  // 함성환 1년치 선납
+};
+// 2025 납부현황 (전원 9~12월 완납, 함성환 포함)
+const defaultPay2025 = {
+  1:{9:true,10:true,11:true,12:true},
+  2:{9:true,10:true,11:true,12:true},
+  3:{9:true,10:true,11:true,12:true},
+  4:{9:true,10:true,11:true,12:true},
+  5:{9:true,10:true,11:true,12:true},
+  6:{9:true,10:true,11:true,12:true},
+  7:{9:true,10:true,11:true,12:true},
+  8:{9:true,10:true,11:true,12:true},
+  9:{9:true,10:true,11:true,12:true},
+  10:{9:true,10:true,11:true,12:true},
+  11:{9:true,10:true,11:true,12:true},
+  12:{9:true,10:true,11:true,12:true},
+  13:{9:true,10:true,11:true,12:true},
+  14:{9:true,10:true,11:true,12:true},
+  15:{9:true,10:true,11:true,12:true},
+  16:{9:true,10:true,11:true,12:true},
+  17:{9:true,10:true,11:true,12:true},
+  18:{9:true,10:true,11:true,12:true},
+  19:{9:true,10:true,11:true,12:true},  // 함성환 1년치 선납
+};
+
+const defaultFin2026 = [
+  {id:1, date:'2026-01-01', desc:'이월', type:'in', amount:2480178, note:''},
+  {id:2, date:'2026-01-20', desc:'캐시백', type:'in', amount:2761, note:''},
+  {id:3, date:'2026-01-20', desc:'1월 회비_12명', type:'in', amount:600000, note:''},
+  {id:4, date:'2026-01-20', desc:'동대닭한마리', type:'out', amount:0, note:''},
+];
+
+const defaultFin2025 = [
+  {id:1, date:'2025-08-26', desc:'이월', type:'in', amount:2325529, note:''},
+  {id:2, date:'2025-08-20', desc:'함성환', type:'in', amount:600000, note:'1년치 25.8-26.7'},
+  {id:3, date:'2025-09-01', desc:'9월 18명 회비 입금', type:'in', amount:900000, note:''},
+  {id:4, date:'2025-09-16', desc:'동방명주', type:'out', amount:770000, note:''},
+  {id:5, date:'2025-09-16', desc:'그린호프', type:'out', amount:191500, note:''},
+  {id:6, date:'2025-10-20', desc:'10월 18명 회비 입금', type:'in', amount:900000, note:''},
+  {id:7, date:'2025-10-21', desc:'서서갈비', type:'out', amount:953000, note:''},
+  {id:8, date:'2025-10-21', desc:'명보호프', type:'out', amount:180000, note:''},
+  {id:9, date:'2025-11-10', desc:'캐시백', type:'in', amount:4604, note:''},
+  {id:10, date:'2025-11-17', desc:'11월 13명 회비 입금', type:'in', amount:650000, note:''},
+  {id:11, date:'2025-11-18', desc:'11월 5명 회비 입금', type:'in', amount:250000, note:''},
+  {id:12, date:'2025-11-18', desc:'충무물갈비', type:'out', amount:571000, note:''},
+  {id:13, date:'2025-11-18', desc:'본스치킨', type:'out', amount:186000, note:''},
+  {id:14, date:'2025-11-18', desc:'서진문화 찬조금_스타리그', type:'in', amount:50000, note:'스타리그'},
+  {id:15, date:'2025-11-18', desc:'서울프로아트 찬조금_스타리그', type:'in', amount:20000, note:'스타리그'},
+  {id:16, date:'2025-11-18', desc:'한욱/신준철/이혜민/양대중', type:'in', amount:80000, note:'스타리그'},
+  {id:17, date:'2025-12-01', desc:'캐시백', type:'in', amount:1756, note:''},
+  {id:18, date:'2025-12-16', desc:'12월 18명 회비 입금', type:'in', amount:900000, note:''},
+  {id:19, date:'2025-12-16', desc:'일식성진', type:'out', amount:1220000, note:'팁 20,000원'},
+  {id:20, date:'2025-12-16', desc:'엘리팝', type:'out', amount:180400, note:''},
+  {id:21, date:'2025-12-21', desc:'1월 1명 회비 입금', type:'in', amount:50000, note:'강병철'},
+];
+
+// ── Google Sheets 연동 ────────────────────
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzQcjr4LAkALYIbi048MAQs9RA1UZty-kECp-NgoP33IISMtX6atmAQL7OgxmACf8RO/exec';
+
+let members=[], pay2026={}, pay2025={}, fin2026=[], fin2025=[];
+let nextId=200;
+let dashYear='2026', payYear='2026', finYear='2026';
+let isSaving=false;
+
+// ── UTILS ─────────────────────────────────
+const fmt = n => (!n && n!==0)?'-':n.toLocaleString('ko-KR')+'원';
+const fmtD = d => d?String(d).replace(/-/g,'.'):'-';
+
+function showToast(msg, dur=2000){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),dur);
+}
+function showLoading(msg='불러오는 중...'){
+  document.getElementById('loading-overlay').style.display='flex';
+  document.getElementById('loading-msg').textContent=msg;
+}
+function hideLoading(){ document.getElementById('loading-overlay').style.display='none'; }
+
+// ── Google Sheets API (JSONP - CORS 우회) ──
+let _cbIdx = 0;
+function _newCb(){ return 'gasCallback' + (++_cbIdx) + '_' + Date.now(); }
+
+function gsRead(sheet){
+  return new Promise((resolve, reject)=>{
+    const cbName = _newCb();
+    const script = document.createElement('script');
+    const timer = setTimeout(()=>{
+      delete window[cbName];
+      if(document.body.contains(script)) document.body.removeChild(script);
+      reject(new Error('시간 초과 - 인터넷 연결을 확인해주세요'));
+    }, 15000);
+    window[cbName] = function(json){
+      clearTimeout(timer);
+      delete window[cbName];
+      if(document.body.contains(script)) document.body.removeChild(script);
+      if(json.ok) resolve(json.data);
+      else reject(new Error(json.error));
+    };
+    script.src = GAS_URL + '?action=read&sheet=' + encodeURIComponent(sheet) + '&callback=' + cbName;
+    script.onerror = function(){ clearTimeout(timer); delete window[cbName]; reject(new Error('스크립트 로드 실패')); };
+    document.body.appendChild(script);
+  });
+}
+
+function gsWrite(sheet, rows){
+  return new Promise((resolve, reject)=>{
+    const cbName = _newCb();
+    const script = document.createElement('script');
+    const timer = setTimeout(()=>{
+      delete window[cbName];
+      if(document.body.contains(script)) document.body.removeChild(script);
+      reject(new Error('시간 초과 - 인터넷 연결을 확인해주세요'));
+    }, 20000);
+    window[cbName] = function(json){
+      clearTimeout(timer);
+      delete window[cbName];
+      if(document.body.contains(script)) document.body.removeChild(script);
+      if(json.ok) resolve();
+      else reject(new Error(json.error));
+    };
+    const encoded = encodeURIComponent(JSON.stringify(rows));
+    script.src = GAS_URL + '?action=write&sheet=' + encodeURIComponent(sheet) + '&data=' + encoded + '&callback=' + cbName;
+    script.onerror = function(){ clearTimeout(timer); delete window[cbName]; reject(new Error('스크립트 로드 실패')); };
+    document.body.appendChild(script);
+  });
+}
+
+// ── 데이터 로드 ────────────────────────────
+async function loadAll(){
+  showLoading('구글 시트에서 데이터를 불러오는 중...');
+  try {
+    const [mRows, pRows, fRows] = await Promise.all([
+      gsRead('members'),
+      gsRead('payments'),
+      gsRead('finance')
+    ]);
+
+    // members
+    if(mRows.length>0){
+      members = mRows.map(r=>({id:Number(r.id), name:String(r.name), company:String(r.company)}));
+    } else {
+      // 첫 실행: 기본 데이터 업로드
+      members = defaultMembers;
+      await gsWrite('members', members);
+    }
+
+    // payments
+    pay2026={}; pay2025={};
+    if(pRows.length>0){
+      pRows.forEach(r=>{
+        const mid=Number(r.memberId), yr=String(r.year), mo=Number(r.month);
+        const paid = r.paid===true||r.paid==='TRUE'||r.paid==='true'||r.paid==='1';
+        if(yr==='2026'){if(!pay2026[mid])pay2026[mid]={};pay2026[mid][mo]=paid;}
+        else{if(!pay2025[mid])pay2025[mid]={};pay2025[mid][mo]=paid;}
+      });
+    } else {
+      // 첫 실행: 기본 납부 데이터 업로드
+      pay2026=defaultPay2026; pay2025=defaultPay2025;
+      const rows=[];
+      members.forEach(m=>{
+        [1,2,3,4,5,6].forEach(mo=>rows.push({memberId:m.id,year:'2026',month:mo,paid:!!(defaultPay2026[m.id]||{})[mo]}));
+        [9,10,11,12].forEach(mo=>rows.push({memberId:m.id,year:'2025',month:mo,paid:!!(defaultPay2025[m.id]||{})[mo]}));
+      });
+      await gsWrite('payments', rows);
+    }
+
+    // finance
+    if(fRows.length>0){
+      const all=fRows.filter(r=>r.id).map(r=>({
+        id:Number(r.id), date:String(r.date||''), desc:String(r.desc||''),
+        type:String(r.type||'in'), amount:Number(r.amount)||0, note:String(r.note||''),
+        year:String(r.year||'2026')
+      }));
+      fin2026=all.filter(f=>f.year==='2026');
+      fin2025=all.filter(f=>f.year==='2025');
+      nextId=Math.max(...all.map(f=>f.id),200)+1;
+    } else {
+      // 첫 실행: 기본 재무 데이터 업로드
+      fin2026=defaultFin2026; fin2025=defaultFin2025;
+      const rows=[
+        ...defaultFin2026.map(f=>({...f,year:'2026'})),
+        ...defaultFin2025.map(f=>({...f,year:'2025'}))
+      ];
+      await gsWrite('finance', rows);
+    }
+
+    hideLoading();
+    render();
+  } catch(e){
+    hideLoading();
+    showToast('❌ 연결 실패: '+e.message, 4000);
+    // 오프라인 폴백
+    members=defaultMembers; pay2026=defaultPay2026; pay2025=defaultPay2025;
+    fin2026=defaultFin2026; fin2025=defaultFin2025;
+    render();
+  }
+}
+
+// ── 납부 데이터 저장 ──────────────────────
+async function savePayments(){
+  const rows=[];
+  members.forEach(m=>{
+    [1,2,3,4,5,6].forEach(mo=>rows.push({memberId:m.id,year:'2026',month:mo,paid:!!(pay2026[m.id]||{})[mo]}));
+    [9,10,11,12].forEach(mo=>rows.push({memberId:m.id,year:'2025',month:mo,paid:!!(pay2025[m.id]||{})[mo]}));
+  });
+  await gsWrite('payments', rows);
+}
+
+// ── 재무 데이터 저장 ──────────────────────
+async function saveFinance(){
+  const rows=[
+    ...fin2026.map(f=>({...f,year:'2026'})),
+    ...fin2025.map(f=>({...f,year:'2025'}))
+  ];
+  await gsWrite('finance', rows);
+}
+
+// ── 회원 데이터 저장 ──────────────────────
+async function saveMembers(){
+  await gsWrite('members', members);
+}
+
+// ── NAVIGATION ────────────────────────────
+function showSection(id, btn){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('sec-'+id).classList.add('active');
+  btn.classList.add('active');
+  document.getElementById('scroll-area').scrollTop=0;
+  render();
+}
+
+function setYear(yr, btn, ctx){
+  const selector = ctx==='dash'?'#sec-dashboard .chip':
+                   ctx==='pay'?'#sec-payment .chip':'#sec-finance .chip';
+  document.querySelectorAll(selector).forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  if(ctx==='dash') dashYear=yr;
+  else if(ctx==='pay') payYear=yr;
+  else finYear=yr;
+  render();
+}
+
+// ── RENDER ALL ────────────────────────────
+function render(){
+  renderDash();
+  renderPay();
+  renderFin();
+  renderMem();
+}
+
+// ── DASHBOARD ─────────────────────────────
+function renderDash(){
+  const is26=dashYear==='2026';
+  const mList=is26?[1,2,3,4,5,6]:[9,10,11,12];
+  const mLabels=is26?['1월','2월','3월','4월','5월','6월']:['9월','10월','11월','12월'];
+  const pays=is26?pay2026:pay2025;
+  const fins=is26?fin2026:fin2025;
+  document.getElementById('dash-period').textContent=is26?'상반기 1~6월':'하반기 9~12월';
+  document.getElementById('dash-table-title').textContent=dashYear+'년 납부 현황';
+
+  const totalIn=fins.filter(f=>f.type==='in').reduce((s,f)=>s+f.amount,0);
+  const totalOut=fins.filter(f=>f.type==='out').reduce((s,f)=>s+f.amount,0);
+  const bal=totalIn-totalOut;
+  let tp=0,ts=0;
+  members.forEach(m=>{const mp=pays[m.id]||{};mList.forEach(mo=>{ts++;if(mp[mo])tp++;});});
+  const pct=ts?Math.round(tp/ts*100):0;
+
+  document.getElementById('dash-stats').innerHTML=`
+    <div class="stat-card">
+      <div class="stat-label">총 회원</div>
+      <div class="stat-value">${members.length}<span style="font-size:14px;font-family:'Noto Sans KR'">명</span></div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-label">납부율</div>
+      <div class="stat-value">${pct}%</div>
+      <div class="stat-sub">${tp}/${ts}건</div>
+    </div>
+    <div class="stat-card gold">
+      <div class="stat-label">총 입금</div>
+      <div class="stat-value" style="font-size:18px;font-family:'Noto Sans KR';font-weight:900">${fmt(totalIn)}</div>
+    </div>
+    <div class="stat-card ${bal>=0?'blue':''}">
+      <div class="stat-label">현재 잔액</div>
+      <div class="stat-value" style="font-size:16px;font-family:'Noto Sans KR';font-weight:900;color:${bal>=0?'var(--paid)':'var(--accent)'}">${fmt(bal)}</div>
+    </div>`;
+
+  let html=`<thead><tr><th>이름</th>`;
+  mLabels.forEach(m=>html+=`<th>${m}</th>`);
+  html+=`<th>납부</th></tr></thead><tbody>`;
+  members.forEach(m=>{
+    const mp=pays[m.id]||{};
+    const cnt=mList.filter(mo=>mp[mo]).length;
+    const bc=cnt===mList.length?'full':cnt>0?'partial':'none';
+    html+=`<tr><td><div style="font-weight:700;font-size:12px">${m.name}</div><div style="font-size:10px;color:var(--muted)">${m.company}</div></td>`;
+    mList.forEach(mo=>html+=`<td><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;font-size:10px;background:${mp[mo]?'var(--paid)':'var(--unpaid)'};color:${mp[mo]?'white':'var(--muted)'}">${mp[mo]?'✓':'–'}</span></td>`);
+    html+=`<td><span class="count-badge ${bc}">${cnt}/${mList.length}</span></td></tr>`;
+  });
+  html+='</tbody>';
+  document.getElementById('dash-table').innerHTML=html;
+}
+
+// ── PAYMENT ───────────────────────────────
+function renderPay(){
+  const is26=payYear==='2026';
+  const mList=is26?[1,2,3,4,5,6]:[9,10,11,12];
+  const mLabels=is26?['1','2','3','4','5','6']:['9','10','11','12'];
+  const pays=is26?pay2026:pay2025;
+  document.getElementById('pay-title').textContent=payYear+'년 납부 현황';
+
+  let html=`<div class="pay-header-row">
+    <div class="pay-header-spacer">이름</div>
+    <div class="pay-header-months">${mLabels.map(m=>`<div class="pay-header-month">${m}월</div>`).join('')}</div>
+    <div class="pay-header-cnt">납부</div>
+  </div>`;
+
+  members.forEach(m=>{
+    const mp=pays[m.id]||{};
+    const cnt=mList.filter(mo=>mp[mo]).length;
+    const bc=cnt===mList.length?'full':cnt>0?'partial':'none';
+    html+=`<div class="member-pay-row">
+      <div class="member-pay-info">
+        <div class="member-pay-name">${m.name}</div>
+        <div class="member-pay-co">${m.company}</div>
+      </div>
+      <div class="month-dots">
+        ${mList.map(mo=>`<button class="pay-dot ${mp[mo]?'paid':'unpaid'}" onclick="togglePay(${m.id},${mo})">${mp[mo]?'✓':'–'}</button>`).join('')}
+      </div>
+      <span class="count-badge ${bc}">${cnt}/${mList.length}</span>
+    </div>`;
+  });
+  document.getElementById('pay-list').innerHTML=html;
+}
+
+async function togglePay(mid, mo){
+  if(isSaving){showToast('저장 중입니다...');return;}
+  const is26=payYear==='2026';
+  const pays=is26?pay2026:pay2025;
+  if(!pays[mid])pays[mid]={};
+  pays[mid][mo]=!pays[mid][mo];
+  if(is26)pay2026=pays; else pay2025=pays;
+  const m=members.find(x=>x.id===mid);
+  renderPay(); renderDash();
+  isSaving=true;
+  showToast('저장 중...⏳',3000);
+  try{
+    await savePayments();
+    showToast(`${m.name} ${mo}월 ${pays[mid][mo]?'납부✓':'미납'}저장됨`);
+  }catch(e){showToast('❌ 저장 실패: '+e.message,4000);}
+  isSaving=false;
+}
+
+// ── FINANCE ───────────────────────────────
+function renderFin(){
+  const is26=finYear==='2026';
+  const fins=is26?fin2026:fin2025;
+  document.getElementById('fin-title').textContent=finYear+'년 재무 내역';
+  let bal=0,tIn=0,tOut=0;
+  const rows=fins.map(f=>{
+    if(f.type==='in'){bal+=f.amount;tIn+=f.amount;}
+    else{bal-=f.amount;tOut+=f.amount;}
+    return{...f,bal};
+  });
+  document.getElementById('fin-bal-display').textContent='잔액 '+fmt(bal);
+
+  let html='';
+  rows.forEach(f=>{
+    const sign=f.type==='in'?'+':'–';
+    html+=`<div class="fin-row">
+      <div class="fin-left">
+        <div class="fin-date">${fmtD(f.date)}</div>
+        <div class="fin-desc">${f.desc}</div>
+        ${f.note?`<div class="fin-note">${f.note}</div>`:''}
+      </div>
+      <div class="fin-right">
+        <div class="fin-amount ${f.type}">${sign}${fmt(f.amount)}</div>
+        <div class="fin-balance">잔 ${fmt(f.bal)}</div>
+      </div>
+      <button class="btn-del" onclick="delFin(${f.id})">삭제</button>
+    </div>`;
+  });
+  html+=`<div class="fin-summary">
+    <span class="in">입금 ${fmt(tIn)}</span>
+    <span class="out">출금 ${fmt(tOut)}</span>
+    <span class="bal">잔액 ${fmt(bal)}</span>
+  </div>`;
+  document.getElementById('fin-list').innerHTML=html;
+}
+
+async function addFinance(){
+  if(isSaving){showToast('저장 중입니다...');return;}
+  const date=document.getElementById('fin-date').value;
+  const desc=document.getElementById('fin-desc').value.trim();
+  const type=document.getElementById('fin-type').value;
+  const amount=parseInt(document.getElementById('fin-amount').value)||0;
+  const note=document.getElementById('fin-note').value.trim();
+  if(!desc||!amount){showToast('적요와 금액을 입력하세요');return;}
+  const entry={id:nextId++,date,desc,type,amount,note};
+  if(finYear==='2026')fin2026.push(entry); else fin2025.push(entry);
+  document.getElementById('fin-desc').value='';
+  document.getElementById('fin-amount').value='';
+  document.getElementById('fin-note').value='';
+  renderFin();
+  isSaving=true;
+  showToast('저장 중...⏳',3000);
+  try{ await saveFinance(); showToast('추가 저장완료 ✓'); }
+  catch(e){ showToast('❌ 저장 실패: '+e.message,4000); }
+  isSaving=false;
+}
+
+async function delFin(id){
+  if(!confirm('삭제하시겠습니까?'))return;
+  if(finYear==='2026')fin2026=fin2026.filter(f=>f.id!==id);
+  else fin2025=fin2025.filter(f=>f.id!==id);
+  renderFin();
+  isSaving=true;
+  showToast('저장 중...⏳',3000);
+  try{ await saveFinance(); showToast('삭제 저장완료 ✓'); }
+  catch(e){ showToast('❌ 저장 실패: '+e.message,4000); }
+  isSaving=false;
+}
+
+// ── MEMBERS ───────────────────────────────
+function renderMem(){
+  document.getElementById('mem-count-title').textContent=`회원 목록 (${members.length}명)`;
+  document.getElementById('mem-list').innerHTML=members.map((m,i)=>`
+    <div class="mem-item">
+      <div class="mem-num">${i+1}</div>
+      <div class="mem-info">
+        <div class="mem-name">${m.name}</div>
+        <div class="mem-co">${m.company}</div>
+      </div>
+      <button class="btn-del" onclick="delMem(${m.id})">삭제</button>
+    </div>`).join('');
+}
+
+async function addMember(){
+  if(isSaving){showToast('저장 중입니다...');return;}
+  const name=document.getElementById('mem-name').value.trim();
+  const company=document.getElementById('mem-company').value.trim();
+  if(!name){showToast('이름을 입력하세요');return;}
+  const nid=Math.max(...members.map(m=>m.id),0)+1;
+  members.push({id:nid,name,company});
+  document.getElementById('mem-name').value='';
+  document.getElementById('mem-company').value='';
+  renderMem();
+  isSaving=true;
+  showToast('저장 중...⏳',3000);
+  try{ await saveMembers(); showToast(`${name} 추가 저장완료 ✓`); }
+  catch(e){ showToast('❌ 저장 실패: '+e.message,4000); }
+  isSaving=false;
+}
+
+async function delMem(id){
+  const m=members.find(x=>x.id===id);
+  if(!confirm(`${m.name}(${m.company}) 삭제하시겠습니까?`))return;
+  members=members.filter(x=>x.id!==id);
+  renderMem();
+  isSaving=true;
+  showToast('저장 중...⏳',3000);
+  try{ await saveMembers(); showToast('삭제 저장완료 ✓'); }
+  catch(e){ showToast('❌ 저장 실패: '+e.message,4000); }
+  isSaving=false;
+}
+
+// ── 전체 초기화 ───────────────────────────
+async function resetAllData(){
+  if(!confirm('구글 시트의 모든 데이터를 최신 기본 데이터로 초기화하시겠습니까?\n\n현재 시트에 저장된 데이터는 모두 삭제됩니다.')) return;
+  showLoading('구글 시트에 데이터 업로드 중...');
+  try {
+    // 1) members
+    await gsWrite('members', defaultMembers);
+    members = defaultMembers;
+
+    // 2) payments
+    const payRows=[];
+    defaultMembers.forEach(m=>{
+      [1,2,3,4,5,6].forEach(mo=>payRows.push({memberId:m.id,year:'2026',month:mo,paid:!!(defaultPay2026[m.id]||{})[mo]}));
+      [9,10,11,12].forEach(mo=>payRows.push({memberId:m.id,year:'2025',month:mo,paid:!!(defaultPay2025[m.id]||{})[mo]}));
+    });
+    await gsWrite('payments', payRows);
+    pay2026=JSON.parse(JSON.stringify(defaultPay2026));
+    pay2025=JSON.parse(JSON.stringify(defaultPay2025));
+
+    // 3) finance
+    const finRows=[
+      ...defaultFin2026.map(f=>({...f,year:'2026'})),
+      ...defaultFin2025.map(f=>({...f,year:'2025'}))
+    ];
+    await gsWrite('finance', finRows);
+    fin2026=JSON.parse(JSON.stringify(defaultFin2026));
+    fin2025=JSON.parse(JSON.stringify(defaultFin2025));
+
+    hideLoading();
+    showToast('✅ 초기화 완료! 최신 데이터가 반영됐습니다.');
+    render();
+  } catch(e){
+    hideLoading();
+    showToast('❌ 초기화 실패: '+e.message, 4000);
+  }
+}
+
+// ── INIT ──────────────────────────────────
+document.getElementById('fin-date').value=new Date().toISOString().split('T')[0];
+loadAll();
+</script>
+</body>
+</html>
